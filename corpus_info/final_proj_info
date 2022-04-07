@@ -1,0 +1,24 @@
+The files are named such that the second letter of their names correspond to their genre.
+Some genres have been eliminated from the corpus because they aren't clearly either fiction
+or nonfiction (B - editorial, D - religion, F - lore, G - letters, R - humor).
+
+The remaining documents (324 documents) have been separated into the training set
+(60% which is 194 documents), the development set (20% which is 65 documents),
+and the test set (20% which is 65 documents) randomly.
+
+Also note that the files have POS tags included, which should be seperated from
+the tokens.
+
+NONFICTION:
+A - news reportage
+E - skills & hobbies
+H - government
+C - reviews
+J - learned
+
+FICTION:
+K - general fiction
+L - mystery
+M - science fiction
+N - adventure
+P - romance
