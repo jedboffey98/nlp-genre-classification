@@ -1,5 +1,6 @@
 from cmath import cos
 from fileinput import filename
+from gettext import Catalog
 import os
 import math
 
@@ -91,6 +92,8 @@ def main():
 
     correct = 0
     incorrect = 0
+    catAccuracy = dict.fromkeys(cats.values(), 0)
+    catCount = dict.fromkeys(cats.values(), 0)
 
     for fileName in os.listdir(devPath):
         file = open(os.path.join(devPath, fileName), "r")
@@ -109,16 +112,28 @@ def main():
 
         closest = max(cosSims, key=cosSims.get)
 
-        print("Most similar to " + closest + "(" + cats[closest] + ")")
+        print(fileName + " (" + cats[fileName] + ") most similar to " + closest + " (" + cats[closest] + ")")
+        catCount[cats[fileName]] += 1
+
         if cats[closest] == cats[fileName]:
-            print("Correct")
+            print("Correct\n")
             correct += 1
+            catAccuracy[cats[fileName]] += 1
         else:
-            print("Incorrect")
+            print("Incorrect\n")
             incorrect += 1
 
-    print("Correct: " + str(correct) + ". Incorrect: " + str(incorrect) + ". Percentage correct: " + str(correct / (correct + incorrect)) + ".")
+    print("Correct: " + str(correct) + ". Incorrect: " + str(incorrect) + ". Percentage correct: " + str(correct / (correct + incorrect)) + ".\n")
     
+    for cat, correctCount in catAccuracy.items():
+        totalCount = catCount[cat]
+
+        if totalCount == 0:
+            continue
+
+        accurancy = correctCount / totalCount
+
+        print(cat + " accuracy: " + str(accurancy))
 
 if __name__ == "__main__":
     main()
