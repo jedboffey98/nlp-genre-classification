@@ -1,3 +1,4 @@
+from cmath import cos
 from fileinput import filename
 import os
 import math
@@ -59,6 +60,20 @@ def cosineSimilarity(d1, d2):
     
     return numerator / math.sqrt(denominator * denominator2)
 
+def getCats():
+    filePath = os.path.join(os.getcwd(), "corpus-info\\cats.txt")
+    file = open(filePath, "r")
+
+    catDict = dict()
+
+    lines = file.readlines()
+    for line in lines:
+        split = line.split()
+        catDict[split[0]] = split[1]
+    
+    print(catDict)
+    return catDict
+
 def main():
     trainingDocuments = dict()
     trainingPath = os.path.join(os.getcwd(), "training-corpus-processed")
@@ -70,8 +85,12 @@ def main():
 
         trainingDocuments[fileName] = tokenizedDocument
 
+    cats = getCats()
     
     devPath = os.path.join(os.getcwd(), "dev-corpus-processed")
+
+    correct = 0
+    incorrect = 0
 
     for fileName in os.listdir(devPath):
         file = open(os.path.join(devPath, fileName), "r")
@@ -85,10 +104,20 @@ def main():
 
             cosSims[fID] = sim
         
-        for fID, cosSim in dict(sorted(cosSims.items(), key=lambda item: item[1], reverse=True)).items():
-            print("Similarity score of " + str(fileName) + " to " + str(fID) + " of: " + str(cosSim))
+        #for fID, cosSim in dict(sorted(cosSims.items(), key=lambda item: item[1], reverse=True)).items():
+            #print("Similarity score of " + str(fileName) + " to " + str(fID) + " of: " + str(cosSim))
 
-        break
+        closest = max(cosSims, key=cosSims.get)
+
+        print("Most similar to " + closest + "(" + cats[closest] + ")")
+        if cats[closest] == cats[fileName]:
+            print("Correct")
+            correct += 1
+        else:
+            print("Incorrect")
+            incorrect += 1
+
+    print("Correct: " + str(correct) + ". Incorrect: " + str(incorrect) + ". Percentage correct: " + str(correct / (correct + incorrect)) + ".")
     
 
 if __name__ == "__main__":
