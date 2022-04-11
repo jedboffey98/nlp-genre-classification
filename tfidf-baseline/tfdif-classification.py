@@ -58,8 +58,13 @@ def cosineSimilarity(d1, d2):
     denominator2 = 0
     for v2 in d2.values():
         denominator2 += v2 * v2
-    
-    return numerator / math.sqrt(denominator * denominator2)
+
+    d = math.sqrt(denominator * denominator2)
+
+    if d != 0:
+        return numerator / d
+
+    return 0
 
 def getCats():
     filePath = os.path.join(os.getcwd(), "corpus-info\\cats.txt")
