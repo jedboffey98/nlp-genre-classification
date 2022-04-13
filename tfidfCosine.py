@@ -27,7 +27,7 @@ def main():
     trainingPath = os.path.join(os.getcwd(), "training-corpus-processed")
     testPath = os.path.join(os.getcwd(), "dev-corpus-processed")
 
-    trainingVectors, testVectors = processor.getVectors(trainingPath, testPath)
+    trainingVectors, testVectors = processor.getManualVectors(trainingPath, testPath)
 
     preds = dict()
     answerCats = getCats()
