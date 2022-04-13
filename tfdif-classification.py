@@ -3,6 +3,7 @@ from fileinput import filename
 from gettext import Catalog
 import os
 import math
+from scoring import scorer as sc
 
 #Stopwords from homework assignment
 STOPWORDS = ['a','the','an','and','or','but','about','above','after','along','amid','among',\
@@ -77,7 +78,6 @@ def getCats():
         split = line.split()
         catDict[split[0]] = split[1]
     
-    print(catDict)
     return catDict
 
 def main():
@@ -91,14 +91,12 @@ def main():
 
         trainingDocuments[fileName] = tokenizedDocument
 
+    preds = dict()
     cats = getCats()
     
     devPath = os.path.join(os.getcwd(), "dev-corpus-processed")
 
-    correct = 0
-    incorrect = 0
-    catAccuracy = dict.fromkeys(cats.values(), 0)
-    catCount = dict.fromkeys(cats.values(), 0)
+    
 
     for fileName in os.listdir(devPath):
         file = open(os.path.join(devPath, fileName), "r")
@@ -116,29 +114,10 @@ def main():
             #print("Similarity score of " + str(fileName) + " to " + str(fID) + " of: " + str(cosSim))
 
         closest = max(cosSims, key=cosSims.get)
-
-        print(fileName + " (" + cats[fileName] + ") most similar to " + closest + " (" + cats[closest] + ")")
-        catCount[cats[fileName]] += 1
-
-        if cats[closest] == cats[fileName]:
-            print("Correct\n")
-            correct += 1
-            catAccuracy[cats[fileName]] += 1
-        else:
-            print("Incorrect\n")
-            incorrect += 1
-
-    print("Correct: " + str(correct) + ". Incorrect: " + str(incorrect) + ". Percentage correct: " + str(correct / (correct + incorrect)) + ".\n")
+        preds[fileName] = cats[closest]
     
-    for cat, correctCount in catAccuracy.items():
-        totalCount = catCount[cat]
-
-        if totalCount == 0:
-            continue
-
-        accurancy = correctCount / totalCount
-
-        print(cat + " accuracy: " + str(accurancy))
+    scorer = sc.Scorer(os.path.join(os.getcwd(), "corpus-info\\cats.txt"))
+    scorer.scoreAll(preds)
 
 if __name__ == "__main__":
     main()
