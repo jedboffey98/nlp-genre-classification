@@ -37,7 +37,7 @@ def vectorize(s):
 
     text = text.split(" ")
 
-    text = [word for word in text if word not in STOPWORDS]
+    #text = [word for word in text if word not in STOPWORDS]
     text = [word for word in text if word != ""]
 
     textDict = dict.fromkeys(text, 0)
