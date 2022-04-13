@@ -11,7 +11,7 @@ class Scorer:
             self.catDict[split[0]] = split[1]
 
     def isCorrect(self, documentId, predictedGenre):
-        return predictedGenre  == self.cats[documentId]
+        return predictedGenre  == self.catDict[documentId]
 
     def scoreAll(self, predictionDict): #parameter should be dict in form key: documentId, value: predictedGenre
         for documentId, predictedGenre in predictionDict.items():
