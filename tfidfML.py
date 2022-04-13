@@ -11,6 +11,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import confusion_matrix
 
 def main():
@@ -26,6 +27,7 @@ def main():
         LinearSVC(),
         MultinomialNB(),
         LogisticRegression(random_state=0),
+        KNeighborsClassifier(n_neighbors=3, metric="cosine")
     ]
 
     CV = 3
