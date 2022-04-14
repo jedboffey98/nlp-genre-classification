@@ -1,4 +1,5 @@
 import os
+import re
 
 CORPUS_FOLDERS = ["dev-corpus", "test-corpus", "training-corpus"]
 
@@ -11,7 +12,10 @@ def stripPosTags(path):
     file = open(path)
     text = file.read()
 
-    processedText = " ".join(word.split("/")[0] for word in text.split())
+    #processedText = " ".join(word.split("/")[0] for word in text.split())
+
+    processedText = re.sub("\/([^\s]+)", "", text)
+        
 
     #write to new files
     head, tail = os.path.split(path)
