@@ -3,6 +3,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import chi2
 import pandas as pd
 from utils import getCats
+from utils import getKey
 import numpy as np
 
 CORPUS_FOLDERS = ["dev-corpus", "test-corpus", "training-corpus"]
@@ -24,23 +25,23 @@ def vectorize(s):
     return vector
 
 def getFrame(filePaths):
-    trainingDf = pd.DataFrame(columns=["documentId", "genre", "text"])
+    completeDf = pd.DataFrame(columns=["documentId", "text"])
 
-    cats = getCats()
+    key = getKey()
 
     for path in filePaths:
         for fileName in os.listdir(path):
             file = open(os.path.join(path, fileName), "r")
             data = file.read()
 
-            df = pd.DataFrame([[fileName, cats[fileName], data]], columns=["documentId", "genre", "text"])
+            df = pd.DataFrame([[fileName, data]], columns=["documentId", "text"])
             
-            trainingDf = pd.concat([trainingDf, df])
-        
+            completeDf = pd.concat([completeDf, df])
+    
 
-    trainingDf.set_index("documentId", inplace=True)
+    completeDf = pd.concat([completeDf.set_index("documentId"), key.set_index("documentId")], axis=1)
 
-    return trainingDf
+    return completeDf
 
 def getFeatures(trainingPath):
     trainingDf = getFrame(trainingPath)    
@@ -91,4 +92,5 @@ def getManualVectors(trainingPath, testPath):
 if __name__ == "__main__":
     trainingPath = os.path.join(os.getcwd(), "training-corpus-processed")
     testPath = os.path.join(os.getcwd(), "dev-corpus-processed")
-    getFeatures(trainingPath)
+    print(testPath)
+    getFrame(testPath)

@@ -15,6 +15,7 @@ def stripPosTags(path):
     #processedText = " ".join(word.split("/")[0] for word in text.split())
 
     processedText = re.sub("\/([^\s]+)", "", text)
+    processedText = re.sub('\s+',' ', processedText)
         
 
     #write to new files
