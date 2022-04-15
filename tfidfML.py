@@ -1,6 +1,5 @@
 import os
-from sklearn import pipeline
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import make_pipeline
 import tfidfProcessor as processor
 from sklearn.naive_bayes import MultinomialNB
 import numpy as np
@@ -18,9 +17,14 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import confusion_matrix
 from lime.lime_text import LimeTextExplainer
 import random
+import nltk
+from nltk.corpus import stopwords
+
+#from nltk
+STOPWORDS = list(stopwords.words('english'))
 
 def compareModelAccuracy(dataFrame, target):
-    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words="english")
+    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
     dfTrain, _ = train_test_split(dataFrame, test_size=0.15, random_state=12)
 
     models = [
@@ -59,7 +63,7 @@ def showLinearSCVMatrices(dataFrame, target):
     svm = LinearSVC()
     model = CalibratedClassifierCV(svm, cv=3)
 
-    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words="english")
+    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
     vectorizer.fit_transform(dfTrain.text)
 
     pipeline = make_pipeline(vectorizer, model)
@@ -84,7 +88,7 @@ def showRandomLimeExplainer(dataFrame, target):
     svm = LinearSVC()
     model = CalibratedClassifierCV(svm, cv=3)
 
-    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words="english")
+    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
     vectorizer.fit_transform(dfTrain.text)
 
     pipeline = make_pipeline(vectorizer, model)
@@ -105,6 +109,48 @@ def showRandomLimeExplainer(dataFrame, target):
 
         inp = input("Type [exit] to return to the menu or hit enter to see more explainers\n")
 
+def inputtedPrediction(df):
+    print("Enter text below:\n")
+    text = []
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        text.append(line)
+
+    text = "\n".join(text)
+
+    dfTrain, _ = train_test_split(df, test_size=0.15, random_state=12)
+    genreDf = dfTrain.drop('subgenre', axis=1)
+    subgenreDf = dfTrain.drop('genre', axis=1)
+
+    #most accurate model
+    svm = LinearSVC()
+    model = CalibratedClassifierCV(svm, cv=3)
+
+    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
+    vectorizer.fit_transform(genreDf.text)
+
+    pipeline = make_pipeline(vectorizer, model)
+    pipeline.fit(genreDf.text, genreDf.genre)
+    genreYPred = pipeline.predict([text])
+    genreYPredProb = pipeline.predict_proba([text])
+    
+    print("Pred:", genreYPred[0], "| Prob:", round(np.max(genreYPredProb[0]), 2)) # show explanation
+    explainer = LimeTextExplainer(class_names=np.unique(genreDf.genre))
+    explained = explainer.explain_instance(text, pipeline.predict_proba, num_features=5)
+    print(explained.as_list())
+
+    pipeline.fit(subgenreDf.text, subgenreDf.subgenre)
+    subgenreYPred = pipeline.predict([text])
+    subgenreYPredProb = pipeline.predict_proba([text])
+
+    print("Pred:", subgenreYPred[0], "| Prob:", round(np.max(subgenreYPredProb[0]), 2)) # show explanation
+    explainer = LimeTextExplainer(class_names=np.unique(subgenreDf.subgenre))
+    explained = explainer.explain_instance(text, pipeline.predict_proba, num_features=5)
+    print(explained.as_list())
+
 
 if __name__ == "__main__":
     trainingPath = os.path.join(os.getcwd(), "training-corpus-processed")
@@ -115,6 +161,8 @@ if __name__ == "__main__":
     genreDf = df.drop('subgenre', axis=1)
     subgenreDf = df.drop('genre', axis=1)
 
+    nltk.download('stopwords')
+
     while True:
         print("Menu...")
         print("(1) Show model accuracies for genres")
@@ -123,6 +171,7 @@ if __name__ == "__main__":
         print("(4) Show SVC subgenre confusion matrix")
         print("(5) Show LimeTextExplainers for genre predictions")
         print("(6) Show LimeTextExplainers for subgenre predictions")
+        print("(7) Input text and see prediction, probability, and why")
         print("(Exit)")
 
         inp = input("")
@@ -142,3 +191,5 @@ if __name__ == "__main__":
             showRandomLimeExplainer(genreDf, "genre")
         if(inp == "6"):
             showRandomLimeExplainer(subgenreDf, "subgenre")
+        if(inp == "7"):
+            inputtedPrediction(df)
