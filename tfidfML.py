@@ -15,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import confusion_matrix
+from sklearn import metrics
 from lime.lime_text import LimeTextExplainer
 import random
 import nltk
@@ -25,7 +26,7 @@ STOPWORDS = list(stopwords.words('english'))
 
 def compareModelAccuracy(dataFrame, target):
     vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
-    dfTrain, _ = train_test_split(dataFrame, test_size=0.15, random_state=12)
+    dfTrain, dfTest = train_test_split(dataFrame, test_size=0.15, random_state=12)
 
     models = [
         RandomForestClassifier(n_estimators=200, max_depth=3, random_state=0),
@@ -55,6 +56,105 @@ def compareModelAccuracy(dataFrame, target):
     sns.stripplot(x="model_name", y="accuracy", data=cv_df, size=8, jitter=True, edgecolor="gray", linewidth=2)
 
     plt.show()
+
+    for model in models:
+        svm = model
+        title = model.__class__.__name__
+        model = CalibratedClassifierCV(svm, cv=3)
+
+        vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
+        vectorizer.fit_transform(dfTrain.text)
+
+        pipeline = make_pipeline(vectorizer, model)
+        
+        pipeline.fit(dfTrain.text, dfTrain[target])
+        yPred = pipeline.predict(dfTest.text)
+        
+        conf_mat = confusion_matrix(dfTest[target], yPred)
+        
+        #plot confusion matrix
+        plt.subplots(figsize=(10,10))
+        sns.heatmap(conf_mat, annot=True, fmt="d", xticklabels=np.unique(df[target].values), yticklabels=np.unique(df[target].values), cmap="summer")
+        plt.ylabel("Actual")
+        plt.xlabel("Predicted")
+        plt.title(title)
+
+        plt.show()
+
+def showAllReports(dataFrame, target):
+    vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
+    dfTrain, dfTest = train_test_split(dataFrame, test_size=0.15, random_state=12)
+
+    models = [
+        RandomForestClassifier(n_estimators=200, max_depth=3, random_state=0),
+        LinearSVC(),
+        MultinomialNB(),
+        LogisticRegression(random_state=0),
+        KNeighborsClassifier(n_neighbors=3, metric="cosine")
+    ]
+
+    entries = []
+    cv = KFold(n_splits=3)
+
+    for model in models:
+        svm = model
+        title = model.__class__.__name__
+        model = CalibratedClassifierCV(svm, cv=3)
+
+        vectorizer = TfidfVectorizer(sublinear_tf=True, min_df=3, encoding="latin-1", ngram_range=(1, 2), stop_words=STOPWORDS)
+        vectorizer.fit_transform(dfTrain.text)
+
+        pipeline = make_pipeline(vectorizer, model)
+        
+        pipeline.fit(dfTrain.text, dfTrain[target])
+        yPred = pipeline.predict(dfTest.text)
+        yPredProb = pipeline.predict_proba(dfTest.text)
+
+        print("\n\n" + title)
+        
+        accuracy = metrics.accuracy_score(dfTest[target], yPred)
+        print("Accuracy:",  round(accuracy,2))
+        print("Detail:")
+        print(metrics.classification_report(dfTest[target], yPred))
+
+        
+        classes = np.unique(dfTest[target])
+        y_test_array = pd.get_dummies(dfTest[target], drop_first=False).values
+
+        ## Plot roc
+        fig, ax = plt.subplots(nrows=1, ncols=2)
+        for i in range(len(classes)):
+            fpr, tpr, thresholds = metrics.roc_curve(y_test_array[:,i],  
+                                yPredProb[:,i])
+            ax[0].plot(fpr, tpr, lw=3, 
+                    label='{0} (area={1:0.2f})'.format(classes[i], 
+                                    metrics.auc(fpr, tpr))
+                    )
+        ax[0].plot([0,1], [0,1], color='navy', lw=3, linestyle='--')
+        ax[0].set(xlim=[-0.05,1.0], ylim=[0.0,1.05], 
+                xlabel='False Positive Rate', 
+                ylabel="True Positive Rate (Recall)", 
+                title="Receiver operating characteristic")
+        ax[0].legend(loc="lower right")
+        ax[0].grid(True)
+            
+        ## Plot precision-recall curve
+
+        for i in range(len(classes)):
+            precision, recall, thresholds = metrics.precision_recall_curve(
+                        y_test_array[:,i], yPredProb[:,i])
+            ax[1].plot(recall, precision, lw=3, 
+                    label='{0} (area={1:0.2f})'.format(classes[i], 
+                                        metrics.auc(recall, precision))
+                    )
+        ax[1].set(xlim=[0.0,1.05], ylim=[0.0,1.05], xlabel='Recall', 
+                ylabel="Precision", title="Precision-Recall curve")
+        ax[1].legend(loc="best")
+        ax[1].grid(True)
+
+        fig.suptitle(title)
+
+        plt.show()
 
 def showLinearSCVMatrices(dataFrame, target):
     dfTrain, dfTest = train_test_split(dataFrame, test_size=0.15, random_state=12)
@@ -172,6 +272,8 @@ if __name__ == "__main__":
         print("(5) Show LimeTextExplainers for genre predictions")
         print("(6) Show LimeTextExplainers for subgenre predictions")
         print("(7) Input text and see prediction, probability, and why")
+        print("(8) Show genre score reports for all models")
+        print("(9) Show subgenre score reports for all models")
         print("(Exit)")
 
         inp = input("")
@@ -193,3 +295,7 @@ if __name__ == "__main__":
             showRandomLimeExplainer(subgenreDf, "subgenre")
         if(inp == "7"):
             inputtedPrediction(df)
+        if(inp == "8"):
+            showAllReports(genreDf, "genre")
+        if(inp == "9"):
+            showAllReports(subgenreDf, "subgenre")

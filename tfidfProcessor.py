@@ -14,6 +14,7 @@ def vectorize(s):
     text = "".join(c for c in text if c.isalpha() or c == " ")
     text = text.strip(os.linesep)
     text = text.split(" ")
+    text = text.lower()
     text = [word for word in text if word != ""]
 
     vector = dict.fromkeys(text, 0)
@@ -33,6 +34,7 @@ def getFrame(filePaths):
         for fileName in os.listdir(path):
             file = open(os.path.join(path, fileName), "r")
             data = file.read()
+            data = data.lower()
 
             df = pd.DataFrame([[fileName, data]], columns=["documentId", "text"])
             
